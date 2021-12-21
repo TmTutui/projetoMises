@@ -1,0 +1,4 @@
+1) Instalar Tesseract OCR a partir do executável
+2) Adicionar o pacote de língua francesa fra.traineddata no endereço:
+
+	C:\Users\Usuário\AppData\Local\Programs\Tesseract-OCR\tessdata
