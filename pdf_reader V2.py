@@ -35,24 +35,13 @@ class PDF():
         return text
 
     def get_email(self):                        
-        email = ''
-                    
-        index = pdf.text.find('À:')
-        if index == -1:
-            index = pdf.text.find('À :')
-        char =  pdf.text[index]
-        print(index, char)
+        email_pos = re.search('[a-z|.|-]+@ecl[0-9][0-9].ec-(\n)*lyon.fr', pdf.text)
+        end = email_pos.span()[-1]
+        start = email_pos.span()[0]
 
-        while ('.ec-lyon.fr' not  in email):
-            email += char
-            index += 1
-            char = pdf.text[index]
+        email = pdf.text[start:end]
 
-        print(email)
-
-        email.strip().split('<')[-1].replace('\n', '')
-
-        return email.strip().split('\n')[-1].split('<')[-1].replace('>', '')
+        return email
         
     def get_mises(self):
         mises_label = ['Mise 1','Mise 2','Mise 3','Mise 4','Mise 5']
@@ -102,7 +91,6 @@ class PDF():
                 break  # if the person has not put all
 
             subject = text_choices[init : end]
-            # print(i, subject)
             subject = subject.split('https')[0].replace('\n', '').strip()  # remove zimbra link and line breaks
             tst_list.append(subject)
 
