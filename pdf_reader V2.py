@@ -4,11 +4,13 @@ from pdfminer.layout import LAParams
 from pdfminer.pdfpage import PDFPage
 from io import StringIO
 import re
-import os
+import shutil,os
+from os.path import isfile,join
 import pandas as pd
 import pytesseract 
 import pdf2image
 import pickle
+from bdd import BDD
 
 pytesseract.pytesseract.tesseract_cmd = r'C:/Users/Tiago/AppData/Local/Programs/Tesseract-OCR/tesseract.exe'
 
@@ -56,11 +58,11 @@ class PDF():
             
         return content
 
-    def get_email(self): 
+    def read_email(self): 
         email = re.search('[a-z|.|-]+@ecl[0-9][0-9].ec-(\n)*lyon.fr', self.text)    
         return email.group(0)            
                            
-    def get_mises(self):          
+    def read_mises(self):          
         def convert_mises_in_lt_values(lt_mises):
             mises_values = []
             for mise in lt_mises:
@@ -78,7 +80,7 @@ class PDF():
         return convert_mises_in_lt_values(mises)
                         
 
-    def get_subjects(self):            
+    def read_subjects(self):            
         pos1 = re.search('aléatoirement.', self.text)
         text_choices = pdf.text[pos1.span()[-1]:]
 
@@ -134,18 +136,29 @@ class PDF():
             
             d[key] = codigo
                 
-        return d
+        return list(d.values())
 
-if __name__ == '__main__':
+if __name__ == '__main__':  
+    
+    bdd = BDD()                     
 
-    pdf = PDF('pdfs\ellectifs S8.pdf')
-    #text = pdf.convert_pdf_to_txt()
-    #print(pdf.get_mises())
-    #print(pdf.get_email())
-    d = pdf.get_subjects()
+    files = [f for f in os.listdir('pdfs') if isfile(join('pdfs', f))]
     
-    print(d)
-    
-    
+    for file in files:        
+        path =  'pdfs/' + file    
+        pdf = PDF(path)
         
+        mises = str(pdf.read_mises())
+        email = pdf.read_email()
+        AF = str(pdf.read_subjects())
+        
+        ID = bdd.adicionar_dados(email, mises, AF)
+        
+        if pdf.flag_OCR:     
+            s = 'Checar os dados de ' + str(file) + ' de ID ' + str(ID)
+            print(s)
+            shutil.copy(path, 'pdfs\Problemáticos')
+       
+
+
   
