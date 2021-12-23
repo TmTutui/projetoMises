@@ -24,7 +24,7 @@ df = pd.read_sql_query("SELECT * FROM questionnaire_s8", cnx)
 
 #%%
 dict_AF = {}
-for user in df['ID']: #Mudar o 9 aqui para a quantidade de dados
+for user in df['ID']:
     aux = ast.literal_eval(df['AF'][user-1]) #
     for position in range(len(aux)):
         if aux[position] in dict_AF:
