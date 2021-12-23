@@ -19,12 +19,12 @@ class BDD():
             ID = self.cursor.lastrowid
             self.conn.commit()   
             
-            return ID
+            return ID[0]
         else:
             s = 'Email '+str(email)+' já cadastrado com a ID ' + str(ID[0])
             print(s)            
             
-            
+            return ID[0]
     
 if __name__ == '__main__':
     

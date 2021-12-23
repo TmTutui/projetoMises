@@ -6,7 +6,6 @@ from io import StringIO
 import re
 import shutil,os
 from os.path import isfile,join
-import pandas as pd
 import pytesseract 
 import pdf2image
 import pickle
@@ -17,6 +16,7 @@ pytesseract.pytesseract.tesseract_cmd = r'C:/Users/Tiago/AppData/Local/Programs/
 class PDF():
     def __init__(self,file_path):
         self.path = file_path
+        self.bdd = BDD()  
         self.flag_OCR = False
         #Tentativa de leitura convencional
         self.text = self.convert_pdf_to_txt(self.path)   
@@ -26,9 +26,26 @@ class PDF():
             self.flag_OCR = True            
             self.text =self.convert_pdf_to_txt_OCR(self.path)
             self.text = '\n'.join(self.text)
-            
-            #! Enviar PDF para uma pasta separada para checagem !
-            
+          
+    def enviar_dados_para_BDD(self):
+        
+        mises = str(self.read_mises())
+        email = self.read_email()
+        AF,flag_error,disciplina_error = self.read_subjects()
+        
+        ID = self.bdd.adicionar_dados(email, mises, str(AF))
+        
+        if flag_error:
+            s = "\n[!] Problema com o código da AF '" + str(disciplina_error) 
+            s += "' do arquivo " + str(self.path) + ' de ID ' + str(ID) 
+            print(s)
+        
+        if self.flag_OCR:     
+            s = '\nChecar os dados de ' + str(self.path) + ' de ID ' + str(ID)
+            print(s)
+            shutil.copy(self.path, 'pdfs\Problemáticos')
+        
+    
     def convert_pdf_to_txt(self,path, pages=None):
         if not pages:
             pagenums = set()
@@ -79,7 +96,6 @@ class PDF():
         
         return convert_mises_in_lt_values(mises)
                         
-
     def read_subjects(self):            
         pos1 = re.search('aléatoirement.', self.text)
         text_choices = pdf.text[pos1.span()[-1]:]
@@ -124,7 +140,9 @@ class PDF():
             for key, value in my_dict.items():
                  if val == value:
                      return key
-                 
+        flag_error = False    
+        disciplina_error = []
+        
         file = open("Dicionario.pkl", "rb")
         dicionario = pickle.load(file)                  
       
@@ -134,31 +152,26 @@ class PDF():
             
             codigo = get_key(disciplina,dicionario)
             
+            if codigo == None:
+                flag_error = True
+                disciplina_error.append(disciplina)
+                
             d[key] = codigo
                 
-        return list(d.values())
+        return list(d.values()),flag_error,disciplina_error
 
-if __name__ == '__main__':  
-    
-    bdd = BDD()                     
+if __name__ == '__main__':                       
 
     files = [f for f in os.listdir('pdfs') if isfile(join('pdfs', f))]
     
     for file in files:        
         path =  'pdfs/' + file    
         pdf = PDF(path)
+        pdf.enviar_dados_para_BDD()
         
-        mises = str(pdf.read_mises())
-        email = pdf.read_email()
-        AF = str(pdf.read_subjects())
         
-        ID = bdd.adicionar_dados(email, mises, AF)
-        
-        if pdf.flag_OCR:     
-            s = 'Checar os dados de ' + str(file) + ' de ID ' + str(ID)
-            print(s)
-            shutil.copy(path, 'pdfs\Problemáticos')
-       
+               
 
-
-  
+    
+    
+     
